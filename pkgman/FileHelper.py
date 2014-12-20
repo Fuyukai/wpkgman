@@ -11,16 +11,18 @@ def GetEffectiveRoot() -> str:
     return "/"
 
 
-def OpenFileRaw(file: str) -> io.TextIOWrapper:
+def OpenFileRaw(file: str, mode: str='r') -> io.FileIO:
     """
     Gets the raw file
-    @param file: The file object that was requested, or None if the file was not found.
+    @param file: The file to open.
+    @param mode: The opening mode of the file. Defaults to r (text read).
+    @return: The file object that was requested, or None if the file was not found.
     """
     new_file_name = GetEffectiveRoot() + file
     f = None
     try:
-        f = open(new_file_name, 'r')
-    except (OSError):
+        f = open(new_file_name, mode)
+    except OSError:
         print("Requested to open {f} but file was not found.".format(f=new_file_name), file=sys.stderr)
     finally:
         return f
@@ -38,3 +40,42 @@ def OpenYAMLFile(file: str) -> dict:
     f.close()
     return dict
 
+def OpenFileForWritingText(file: str) -> io.FileIO:
+    """
+    Opens a file for writing in text mode.
+    @param file: The file to open
+    @return: The file object that was requested, or None if cannot be opened.
+    """
+    new_file_name = GetEffectiveRoot() + file
+    f = None
+    try:
+        f = open(new_file_name, 'w')
+    except OSError:
+        print("Requested to open {f} but file could not be opened.".format(f=new_file_name), file=sys.stderr)
+    finally:
+        return f
+
+def OpenFileForWritingBytes(file: str) -> io.FileIO:
+    """
+    Opens a file for writing in bytes mode.
+    @param file: The file to open
+    @return: The file object that was requested, or None if cannot be opened.
+    """
+    new_file_name = GetEffectiveRoot() + file
+    f = None
+    try:
+        f = open(new_file_name, 'wb')
+    except OSError:
+        print("Requested to open {f} but file could not be opened.".format(f=new_file_name), file=sys.stderr)
+    finally:
+        return f
+
+def WriteYAMLFile(file: str, content: dict) -> None:
+    """
+    Writes data to a YAML file.
+    @param file: The file to open.
+    @param content: The content to write to the file.
+    """
+    f = OpenFileForWritingText(file)
+    yaml.safe_dump(content, f)
+    f.close()
