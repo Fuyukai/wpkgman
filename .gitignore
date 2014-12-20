@@ -55,3 +55,7 @@ target/
 
 # virtualenv
 devenv/
+
+.idea/
+
+fakeroot/
