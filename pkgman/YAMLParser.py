@@ -13,15 +13,8 @@ class Repo(YAMLBase):
         self.priority = 0
         # Auto parse the repo file, and fill in the fields
         yaml_output = FileHelper.OpenYAMLFile('var/wpkgman/repos/' + file + '.yml')
-        # TODO: Add auto downloading of the repo files if possible.
         if yaml_output is None:
-            print("Creating repo file {f} at {ef}".format(f=file,
-                                                          ef=FileHelper.GetEffectiveRoot() + 'var/wpkgman/repos'))
-            content = {
-                'repo': file,
-                'priority': 0
-            }
-            FileHelper.WriteYAMLFile('var/wpkgman/repos' + file + '.yml', content)
+            pass
         else:
             self.name = yaml_output['repo']
             self.priority = yaml_output['priority']
@@ -45,9 +38,7 @@ options:
     - noconfirm: false # only enable this if you hate yourself
 
 mirrors:
-    mirror:
-        - priority: 0
-        - address: http://sundwarf.me/pkg/ # Will autocomplete $repo/$arch/$pkg
+    - http://sundwarf.me/pkg/ # Will autocomplete $repo/$arch/$pkg
 
 repos:
     stable:
@@ -75,8 +66,8 @@ upgrade_first:
             f = FileHelper.OpenFileForWritingText('etc/wpkgman.yml')
             f.write(content)
         else:
-            self.options = (yaml_output['options'][0], yaml_output['options'][1])
+            self.options = (yaml_output['options'][0]['color'], yaml_output['options'][1]['noconfirm'])
             self.mirrors = yaml_output['mirrors']
             self.repos = yaml_output['repos']
-            self.ignore_package = yaml_output['dummy_package']
+            self.ignore_package = yaml_output['ignore_package']
             self.upgrade_first = yaml_output['upgrade_first']
