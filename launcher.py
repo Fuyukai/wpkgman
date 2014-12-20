@@ -22,3 +22,5 @@ parser = argparse.ArgumentParser(description='Wise Package Manager')
 
 
 args = parser.parse_args()
+
+pkgman.sync_sources()
