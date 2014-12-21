@@ -1,35 +1,28 @@
-import tarfile
+import zipfile
 import io
 from . import FileHelper, YAMLParser
 
-def GetDatabaseFile() -> tarfile.TarFile:
+import warnings
+warnings.filterwarnings("ignore")
+
+def GetDatabaseFile(mode: str='r') -> zipfile.ZipFile:
     """
     Gets the file object of the database tarball.
     @return: The file object representing the database file.
     """
-    tarball = FileHelper.OpenFileRaw("var/wpkgman/installed.db", 'rb')
-    if tarball is None:
-        # Silently create a new tarfile.
-        tar = tarfile.open(name=FileHelper.GetEffectiveRoot() + "var/wpkgman/installed.db",
-                           mode='w:xz')
-        tarinfo = tarfile.TarInfo(name="database.yml")
-        samplefile = io.StringIO(initial_value=b"""# WPKGMAN Database File
-# Thank you for using wpkgman!
-# This file is left blank by default.""")
-        tarinfo.size = len(samplefile.read())
-        samplefile.seek(0)
-        tar.addfile(tarinfo, samplefile)
-        # overly complex - check!
-        tarball = FileHelper.OpenFileRaw("var/wpkgman/installed.db", 'rb')
+    zip = FileHelper.OpenFileRaw("var/wpkgman/installed.db", 'rb')
+    if zip is None:
+        # Silently create a new zipfile
+        z = zipfile.ZipFile(file=FileHelper.GetEffectiveRoot() + 'var/wpkgman/installed.db', mode='a')
+        return z
     else:
-        tarball.close()
-    return tarfile.open(name=FileHelper.GetEffectiveRoot() + "var/wpkgman/installed.db",
-                           mode='r:xz')
+        zip.close()
+        return zipfile.ZipFile(file=FileHelper.GetEffectiveRoot() + 'var/wpkgman/installed.db', mode=mode)
 
-def GetFileFromTarball(file: str) -> io.BufferedReader:
-    tarball = GetDatabaseFile()
+def GetFileFromZipfile(file: str) -> io.BufferedReader:
+    zip = GetDatabaseFile()
     try:
-        return tarball.extractfile(file)
+        return zip.read(file)
     except KeyError:
         return None
 
@@ -39,7 +32,7 @@ def IsPackageInstalled(package: str, arch: str='x86_64') -> bool:
     @param package: The package to check.
     @return: If the package is installed or not.
     """
-    return True if GetFileFromTarball(package + '/' + package + arch + '.yml') else False
+    return True if GetFileFromZipfile(package + '/' + package + '-' + arch + '.yml') else False
 
 def IsPackageVersionInstalled(package: str, version: str, arch: str='x86_64') -> bool:
     """
@@ -54,9 +47,9 @@ def IsPackageVersionInstalled(package: str, version: str, arch: str='x86_64') ->
         return False
 
     # Okay
-    f = GetFileFromTarball(package + '/' + package + arch + '.yml')
+    f = GetFileFromZipfile(package + '/' + package + '-' + arch + '.yml')
     # Make something else do the parsing for me
-    pkg = YAMLParser.InstalledPackage(fileobj=f)
+    pkg = YAMLParser.InstalledPackage(f)
     if version != pkg.version:
         return False
     else:
@@ -71,3 +64,18 @@ def DoesPackageOwnFile(package: str, file: str, arch: str='x86_64') -> bool:
     @return: If the package owns the file.
     """
     pass
+
+def AddFileToZipfile(file: str, content: str) -> None:
+    """
+
+    @param file:
+    @param file_on_disk:
+    @return:
+    """
+    # it's easier just to add it from disk
+    zip = GetDatabaseFile(mode='a')
+    try:
+        zip.writestr(file, data=content)
+    except UserWarning:
+        # go away
+        pass
