@@ -1,9 +1,9 @@
+#!/usr/bin/env python3.4
 # wpkgman launcher
 # Does the option parsing then passes the options to pkgman.py
 from pkgman import pkgman as pkgman
 from pkgman import FileHelper as FileHelper
 import argparse
-import yaml
 import os
 
 # Are we running on a test system?
@@ -20,7 +20,6 @@ if test_sys:
 
 parser = argparse.ArgumentParser(description='Wise Package Manager')
 
+pkgman.install_package(['dummypackage'])
 
-args = parser.parse_args()
-
-pkgman.sync_sources()
+#pkgman.sync_sources()

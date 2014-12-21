@@ -1,0 +1,2 @@
+__WPKGMAN_VERSION = "0.1.0"
+__WPKGMAN_AUTHOR = "Eyes"
