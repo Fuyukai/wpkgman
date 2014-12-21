@@ -36,9 +36,9 @@ def OpenYAMLFile(file: str) -> dict:
     f = OpenFileRaw(file)
     if f is None:
         return None
-    dict = yaml.safe_load(f)
+    content = yaml.safe_load(f)
     f.close()
-    return dict
+    return content
 
 def OpenFileForWritingText(file: str) -> io.FileIO:
     """
@@ -75,7 +75,11 @@ def WriteYAMLFile(file: str, content: dict) -> None:
     Writes data to a YAML file.
     @param file: The file to open.
     @param content: The content to write to the file.
+    @return If the write operation succeeded.
     """
     f = OpenFileForWritingText(file)
+    if f is None:
+        return False
     yaml.safe_dump(content, f)
     f.close()
+    return True
