@@ -7,17 +7,23 @@ class YAMLBase(object):
 
 
 class Repo(YAMLBase):
-    def __init__(self, file):
+    def __init__(self, file, reponame):
         super().__init__()
-        self.name = None
+        self.success = False
+        self.name = reponame
         self.priority = 0
+        self.packages = {}
         # Auto parse the repo file, and fill in the fields
-        yaml_output = FileHelper.OpenYAMLFile('var/wpkgman/repos/' + file + '.yml')
+        yaml_output = FileHelper.OpenYAMLFile(file)
         if yaml_output is None:
             pass
         else:
-            self.name = yaml_output['repo']
-            self.priority = yaml_output['priority']
+            try:
+                self.priority = yaml_output['priority']
+                self.packages = yaml_output['packages']
+                self.success = True
+            except KeyError as e:
+                print("Error: repo {repo} is configured incorrectly - ignoring. (key {e} is missing)".format(repo=reponame, e=e))
 
 class Config(YAMLBase):
     def __init__(self):
