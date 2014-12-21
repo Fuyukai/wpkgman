@@ -1,10 +1,25 @@
 from . import FileHelper
-
+import yaml
 
 class YAMLBase(object):
     def __init__(self):
         pass
 
+class InstalledPackage(YAMLBase):
+    def __init__(self, fileobj):
+        super().__init__()
+        self.version = ""
+        self.package = ""
+        self.files = []
+
+        try:
+            yaml_output = yaml.safe_load(fileobj)
+        except:
+            print("Warning: The database entry for the file {f} is corrupted.")
+        else:
+            self.version = yaml_output['version']
+            self.package = yaml_output['package']
+            self.files = yaml_output['files']
 
 class Repo(YAMLBase):
     def __init__(self, file, reponame, priority=0):
@@ -42,7 +57,6 @@ class Config(YAMLBase):
 # edit carefully, if the YAML formatting breaks wpkgman will error
 
 options:
-    - color: true
     - noconfirm: false # only enable this if you hate yourself
 
 mirrors:
@@ -74,7 +88,7 @@ upgrade_first:
             f = FileHelper.OpenFileForWritingText('etc/wpkgman.yml')
             f.write(content)
         else:
-            self.options = (yaml_output['options'][0]['color'], yaml_output['options'][1]['noconfirm'])
+            self.options = (yaml_output['options'][0]['noconfirm'])
             self.mirrors = yaml_output['mirrors']
             self.repos = yaml_output['repos']
             self.ignore_package = yaml_output['ignore_package']
