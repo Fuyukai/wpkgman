@@ -7,23 +7,25 @@ class YAMLBase(object):
 
 
 class Repo(YAMLBase):
-    def __init__(self, file, reponame):
+    def __init__(self, file, reponame, priority=0):
         super().__init__()
         self.success = False
         self.name = reponame
-        self.priority = 0
+        self.priority = priority
         self.packages = {}
+        self.content = {}
         # Auto parse the repo file, and fill in the fields
         yaml_output = FileHelper.OpenYAMLFile(file)
         if yaml_output is None:
             pass
         else:
             try:
-                self.priority = yaml_output['priority']
                 self.packages = yaml_output['packages']
                 self.success = True
             except KeyError as e:
                 print("Error: repo {repo} is configured incorrectly - ignoring. (key {e} is missing)".format(repo=reponame, e=e))
+        self.content = yaml_output
+
 
 class Config(YAMLBase):
     def __init__(self):
