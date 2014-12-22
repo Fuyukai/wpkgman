@@ -141,13 +141,17 @@ def install_packages(packages: list):
 
     # TODO: Add verification
     for num, pkg in enumerate(to_install):
-        pkg_name = pkg[0] + '-' + pkg[1] + '-' + arch + '.tar.xz'
+        repo = YAMLParser.Repo('var/wpkgman/repos/' + pkg[2] + '.yml', pkg[2])
+        pkg_name = repo.packages[pkg[0]]['name'] + '-' + arch + '.tar.xz'
         try:
             tarball = tarfile.open(FileHelper.GetEffectiveRoot() + 'var/wpkgman/cache/' + pkg_name,
-                                    mode='r:xz')
+                                   mode='r:xz')
         except FileNotFoundError:
+            print("Installing package {pkg} ({n}/{mn})...".format(
+                pkg=pkg[0], n=num + 1, mn=len(to_install))
+                + Color.red + " failed" + Color.off, file=sys.stderr)
             continue
-        print("Installing package {pkg} ({n}/{mn})...".format(pkg=pkg[0], n=num+1, mn=len(to_install)), end=' ')
+        print("Installing package {pkg} ({n}/{mn})...".format(pkg=pkg[0], n=num + 1, mn=len(to_install)), end=' ')
         # eh, fuck security!
         for name in tarball.getmembers():
             files.append(name.name)
@@ -167,8 +171,10 @@ def install_packages(packages: list):
         # aaand we're done
         print(Color.green + "done" + Color.off)
     if len(failedcounter) > 0:
-        print(Color.red + "{num} packages failed to install.".format(num=len(failedcounter)) + Color.off, file=sys.stderr)
+        print(Color.red + "{num} packages failed to install.".format(num=len(failedcounter)) + Color.off,
+              file=sys.stderr)
     os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+
 
 def get_dependencies(package: str, olddeps: list) -> list:
     y = YAMLParser.Config()
