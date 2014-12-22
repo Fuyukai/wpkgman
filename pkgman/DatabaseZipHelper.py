@@ -26,7 +26,7 @@ def GetFileFromZipfile(file: str) -> io.BufferedReader:
     except KeyError:
         return None
 
-def IsPackageInstalled(package: str, arch: str='x86_64') -> bool:
+def IsPackageInstalled(package: str, arch) -> bool:
     """
     Checks if a package is installed in the database.
     @param package: The package to check.
@@ -34,7 +34,7 @@ def IsPackageInstalled(package: str, arch: str='x86_64') -> bool:
     """
     return True if GetFileFromZipfile(package + '/' + package + '-' + arch + '.yml') else False
 
-def IsPackageVersionInstalled(package: str, version: str, arch: str='x86_64') -> bool:
+def IsPackageVersionInstalled(package: str, version: str, arch) -> bool:
     """
     Checks if a package with the specified version is installed.
     @param package: The package.
