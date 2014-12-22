@@ -8,7 +8,9 @@ import platform
 import tarfile
 import yaml
 import shutil
+
 arch = platform.uname()[4]
+
 
 def sync_sources():
     """
@@ -41,16 +43,18 @@ def sync_sources():
             success = True
             break
         else:
-            sys.stderr.write(Color.red + 'Repo {r} is not working - trying next ({err})\n'.format(r=q, err=r.status_code) + Color.off)
+            sys.stderr.write(Color.red + 'Repo {r} is not working - trying next ({err})\n'.format(r=q,
+                                                                                                  err=r.status_code) + Color.off)
     if not success:
         sys.stderr.write(Color.red + 'Could not find any repos.({num} failed)\n'.format(len(y.mirrors)) + Color.off)
     os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+
 
 def check_package_exists(package: str) -> tuple:
     """
     Checks if a package exists in any of the repos.
     @param package: The package to check.
-    @return: [0] if it exists, [1] the repo it's located in.
+    @return: [0] if it exists, [1] the repo it's located in, [2] the package version
     """
     y = YAMLParser.Config()
     repos_temp = []
@@ -61,13 +65,15 @@ def check_package_exists(package: str) -> tuple:
     for x in repos_temp:
         repo = YAMLParser.Repo(x[0], x[2])
         if not hasattr(repo, 'packages'):
-            print(Color.red + "Something went wrong. Re-run wpkgman with --sync to fix this." + Color.off, file=sys.stderr)
+            print(Color.red + "Something went wrong. Re-run wpkgman with --sync to fix this." + Color.off,
+                  file=sys.stderr)
             return
         for x in repo.packages:
             if x == package:
                 return True, repo.name, repo.packages[x]['version']
         else:
             return False, None, None
+
 
 def install_packages(packages: list):
     if os.path.exists(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock'):
@@ -97,7 +103,7 @@ def install_packages(packages: list):
             return
         to_install += deps
     for x in to_install:
-        if DatabaseZipHelper.IsPackageVersionInstalled(package=x[0], version=x[1]):
+        if DatabaseZipHelper.IsPackageVersionInstalled(package=x[0], version=x[1], arch=arch):
             print(Color.yellow + "warning: package {f}-{v} is already installed".format(f=x[0], v=x[1]) + Color.off)
     if not os.environ.get('WPKGMAN_NO_STTY'):
         rows, columns = os.popen('stty size', 'r').read().split()
@@ -110,15 +116,15 @@ def install_packages(packages: list):
         print(str_to_write)
     else:
         print(textwrap.fill(str_to_write, int(columns)))
-    print("Continue? [Y/n]", end=' ')
+    print(Color.white + "Continue? [Y/n]" + Color.off, end=' ')
     if not input().lower() == 'y':
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
         return
     # Download package
     failedcounter = []
     files = []
     for pkg in to_install:
         # Construct a name
-        continue_loop = False
         pkg_name = pkg[0] + '-' + pkg[1] + '-' + arch + '.tar.xz'
 
         tempf = b""
@@ -133,9 +139,15 @@ def install_packages(packages: list):
         cache_file.write(tempf)
         cache_file.close()
 
-        tarball = tarfile.open(FileHelper.GetEffectiveRoot() + 'var/wpkgman/cache/' + pkg_name,
-                                  mode='r:xz')
-
+    # TODO: Add verification
+    for num, pkg in enumerate(to_install):
+        pkg_name = pkg[0] + '-' + pkg[1] + '-' + arch + '.tar.xz'
+        try:
+            tarball = tarfile.open(FileHelper.GetEffectiveRoot() + 'var/wpkgman/cache/' + pkg_name,
+                                    mode='r:xz')
+        except FileNotFoundError:
+            continue
+        print("Installing package {pkg} ({n}/{mn})...".format(pkg=pkg[0], n=num+1, mn=len(to_install)), end=' ')
         # eh, fuck security!
         for name in tarball.getmembers():
             files.append(name.name)
@@ -153,8 +165,9 @@ def install_packages(packages: list):
         DatabaseZipHelper.AddFileToZipfile(pkg[0] + '/' + pkg[0] +
                                            '-' + arch + '.yml', yaml.dump(d))
         # aaand we're done
+        print(Color.green + "done" + Color.off)
     if len(failedcounter) > 0:
-        print("{num} packages failed to install.".format(num=len(failedcounter)), file=sys.stderr)
+        print(Color.red + "{num} packages failed to install.".format(num=len(failedcounter)) + Color.off, file=sys.stderr)
     os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
 
 def get_dependencies(package: str, olddeps: list) -> list:
@@ -191,9 +204,11 @@ def get_dependencies(package: str, olddeps: list) -> list:
             return False
         if dep in olddeps:
             continue
-        dependencies.append((dep, pkg_exists[2], pkg_exists[1]))
+        if not DatabaseZipHelper.IsPackageInstalled(dep, arch=arch):
+            dependencies.append((dep, pkg_exists[2], pkg_exists[1]))
         dependencies += get_dependencies(dep, olddeps=dependencies)
     return dependencies
+
 
 def search_package(package: str):
     pass
