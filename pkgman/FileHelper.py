@@ -2,14 +2,17 @@
 import yaml
 import sys
 import io
+import os
 
-def GetEffectiveRoot() -> str:
+def GetEffectiveRoot():
     """
     Gets the effective root of the system.
-    @return: The effective root of the system.
+    @return: The effective root of the system. /home/<user>/dev/wpkgman/fakeroot
     """
-    return "/"
-
+    if os.environ.get('WPKGMAN_ROOT'):
+        return os.environ['WPKGMAN_ROOT']
+    else:
+        return "/"
 
 def OpenFileRaw(file: str, mode: str='r') -> io.FileIO:
     """

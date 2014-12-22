@@ -46,7 +46,6 @@ def sync_sources():
         sys.stderr.write(Color.red + 'Could not find any repos.({num} failed)\n'.format(len(y.mirrors)) + Color.off)
     os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
 
-
 def check_package_exists(package: str) -> tuple:
     """
     Checks if a package exists in any of the repos.
@@ -70,8 +69,7 @@ def check_package_exists(package: str) -> tuple:
         else:
             return False, None, None
 
-
-def install_package(packages: list):
+def install_packages(packages: list):
     if os.path.exists(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock'):
         print(Color.red + "Error: Lock file exists. Perhaps wpkgman is open elsewhere?" + Color.off)
         return
@@ -159,8 +157,6 @@ def install_package(packages: list):
         print("{num} packages failed to install.".format(num=len(failedcounter)), file=sys.stderr)
     os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
 
-
-
 def get_dependencies(package: str, olddeps: list) -> list:
     y = YAMLParser.Config()
     repos_temp = []
@@ -198,3 +194,6 @@ def get_dependencies(package: str, olddeps: list) -> list:
         dependencies.append((dep, pkg_exists[2], pkg_exists[1]))
         dependencies += get_dependencies(dep, olddeps=dependencies)
     return dependencies
+
+def search_package(package: str):
+    pass

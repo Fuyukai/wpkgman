@@ -10,17 +10,6 @@ import sys
 # Are we running on a test system?
 test_sys = os.environ.get('WPKGMAN_TEST')
 # Inject a function into the open/close helper lib to redirect packages to a test dir.
-if test_sys:
-    def GetEffectiveRoot():
-        """
-        Gets the effective root of the system.
-        @return: The effective root of the system. /home/<user>/dev/wpkgman/fakeroot
-        """
-        if os.environ.get('WPKGMAN_ROOT'):
-            return os.environ['WPKGMAN_ROOT']
-        else:
-            return os.environ['HOME'] + '/dev/wpkgman/fakeroot/'
-    FileHelper.GetEffectiveRoot = GetEffectiveRoot
 
 # Create starter directories
 if not os.path.exists(FileHelper.GetEffectiveRoot() + 'var'):
