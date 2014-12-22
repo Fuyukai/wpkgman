@@ -1,12 +1,15 @@
 #!/usr/bin/env python3.4
 # wpkgman launcher
 # Does the option parsing then passes the options to pkgman.py
+import argparse
+import sys
+
 from pkgman import pkgman as pkgman
 from pkgman import FileHelper as FileHelper
 from pkgman.WPKGMANINFO import Color as Color
-import argparse
 import os
-import sys
+
+
 # Are we running on a test system?
 test_sys = os.environ.get('WPKGMAN_TEST')
 # Inject a function into the open/close helper lib to redirect packages to a test dir.
@@ -31,7 +34,7 @@ parser = argparse.ArgumentParser(description='Wise Package Manager', prog="wpkgm
 parser.add_argument("-I", "--install", nargs="+", help="Install package(s)", metavar="PKG")
 parser.add_argument("-S", "--sync", action="store_true", default=False,
                     help="Sync repository databases")
-parser.add_argument("-s", "--search", nargs="+", help="Search for packages")
+parser.add_argument("-s", "--search", nargs=1, help="Search for packages")
 args = parser.parse_args()
 hasarg = False
 
@@ -45,7 +48,10 @@ if args.sync:
     check_uid()
     pkgman.sync_sources()
     hasarg = True
-if args.install:
+if args.search:
+    pkgman.search_package(args.search[0])
+    hasarg = True
+elif args.install:
     check_uid()
     pkgman.install_packages(args.install)
     hasarg = True

@@ -1,4 +1,6 @@
-import os, sys
+import sys
+
+import os
 # Main pkgman file
 from . import FileHelper, YAMLParser, ProgressBar, DatabaseZipHelper
 from .WPKGMANINFO import Color as Color
@@ -7,7 +9,6 @@ import textwrap
 import platform
 import tarfile
 import yaml
-import shutil
 
 arch = platform.uname()[4]
 
@@ -117,6 +118,7 @@ def install_packages(packages: list):
     # TODO: Add size total to this
     print("Packages to install ({n}):".format(n=len(to_install)))
     str_to_write = ""
+    columns = 0  # to make pycharm shut up
     for x in to_install:
         str_to_write += x[0] + "-" + x[1] + " "
     if os.environ.get('WPKGMAN_NO_STTY'):
@@ -229,4 +231,20 @@ def get_dependencies(package: str, olddeps: list) -> list:
 
 
 def search_package(package: str):
-    pass
+    # If I knew regexps, I would do it here.
+    # But I don't.
+    # First, get all repos from the config file
+    y = YAMLParser.Config()
+    repos = []
+    for r in y.repos:
+        repo = YAMLParser.Repo(y.repos[r]['loc'], r)
+        repos.append(repo)
+    for repo in repos:
+        if not hasattr(repo, 'packages'):
+            # Oops!
+            continue
+        for pkg in repo.packages:
+            if package in pkg:
+                print(repo.name + "/" + pkg + '-' + repo.packages[pkg]['version'] + ':')
+                if 'description' in repo.packages[pkg]:
+                    print("\t" + repo.packages[pkg]['description'])
