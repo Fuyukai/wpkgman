@@ -8,3 +8,4 @@ class Color:
     green = "\033[0;32m"
     cyan = "\033[0;36m"
     yellow = "\033[1;33m"
+    white = "\033[1;37m"
