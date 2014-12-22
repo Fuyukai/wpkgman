@@ -1,11 +1,12 @@
 import sys
 import requests
 from progressbar import Bar, FileTransferSpeed, Percentage, ProgressBar
+from .WPKGMANINFO import Color as Color
 # Taken from http://stackoverflow.com/questions/10525635/python-3-and-requests-with-a-progressbar
 def get_file(file_url, name):
     r = requests.get(file_url, stream=True)
     if not r.status_code == requests.codes.ok:
-        print("Getting URL " + file_url + " failed ({code})".format(code=r.status_code), file=sys.stderr)
+        print(Color.red + "Getting URL " + file_url + " failed ({code})".format(code=r.status_code) + Color.off, file=sys.stderr)
         return None
     size = int(r.headers['Content-Length'].strip())
     bytes = 0
