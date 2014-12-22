@@ -26,6 +26,7 @@ def sync_sources():
         print(Color.red + "Something went wrong. "
                           "Your config file has probably been just created - try this command again." + Color.off,
               file=sys.stderr)
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
         return
     success = False
     for q in y.mirrors:
@@ -67,12 +68,16 @@ def check_package_exists(package: str) -> tuple:
         if not hasattr(repo, 'packages'):
             print(Color.red + "Something went wrong. Re-run wpkgman with --sync to fix this." + Color.off,
                   file=sys.stderr)
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
             return
         for x in repo.packages:
             if x == package:
                 return True, repo.name, repo.packages[x]['version']
         else:
-            return False, None, None
+            # uh
+            continue
+    else:
+        return False, None, None
 
 
 def install_packages(packages: list):
@@ -88,6 +93,7 @@ def install_packages(packages: list):
     repos_temp.sort(key=lambda tup: tup[1], reverse=True)
     if not hasattr(y, 'repos'):
         print(Color.red + "Something went wrong. Re-run wpkgman with --sync to fix this." + Color.off, file=sys.stderr)
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
         return
     to_install = []
     print("Calculating dependencies...")
@@ -95,6 +101,7 @@ def install_packages(packages: list):
         pkg_exists = check_package_exists(pkg)
         if not pkg_exists[0]:
             print(Color.red + "Error: no package called {pkg} exists".format(pkg=pkg) + Color.off, file=sys.stderr)
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
             return
         to_install.append((pkg, pkg_exists[2], pkg_exists[1]))
         deps = get_dependencies(pkg, [])
@@ -125,7 +132,9 @@ def install_packages(packages: list):
     files = []
     for pkg in to_install:
         # Construct a name
-        pkg_name = pkg[0] + '-' + pkg[1] + '-' + arch + '.tar.xz'
+        # pkg_name = pkg[0] + '-' + pkg[1] + '-' + arch + '.tar.xz'
+        repo = YAMLParser.Repo('var/wpkgman/repos/' + pkg[2] + '.yml', pkg[2])
+        pkg_name = repo.packages[pkg[0]]['name'] + '-' + arch + '.tar.xz'
 
         tempf = b""
         for mirror in y.mirrors:
@@ -185,10 +194,12 @@ def get_dependencies(package: str, olddeps: list) -> list:
     repos_temp.sort(key=lambda tup: tup[1], reverse=True)
     if not hasattr(y, 'repos'):
         print("Something went wrong. Re-run wpkgman with --sync to fix this.", file=sys.stderr)
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
         return
     pkg_exists = check_package_exists(package)
     if not pkg_exists[0]:
         print("Error: no package called {pkg} exists".format(pkg=package), file=sys.stderr)
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
         return False
     repo_get_deps = ""
     for repo in repos_temp:
@@ -207,6 +218,7 @@ def get_dependencies(package: str, olddeps: list) -> list:
         pkg_exists = check_package_exists(dep)
         if not pkg_exists[0]:
             print("Error: no package called {pkg} exists".format(pkg=dep), file=sys.stderr)
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
             return False
         if dep in olddeps:
             continue
