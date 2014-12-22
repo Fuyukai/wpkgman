@@ -1,25 +1,10 @@
 from . import FileHelper
-import yaml
+
 
 class YAMLBase(object):
     def __init__(self):
         pass
 
-class InstalledPackage(YAMLBase):
-    def __init__(self, fileobj):
-        super().__init__()
-        self.version = ""
-        self.package = ""
-        self.files = []
-
-        try:
-            yaml_output = yaml.safe_load(fileobj)
-        except:
-            print("Warning: The database entry for the file {f} is corrupted.")
-        else:
-            self.version = yaml_output['version']
-            self.package = yaml_output['package']
-            self.files = yaml_output['files']
 
 class Repo(YAMLBase):
     def __init__(self, file, reponame, priority=0):

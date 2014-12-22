@@ -8,7 +8,6 @@ import requests
 import textwrap
 import platform
 import tarfile
-import yaml
 
 arch = platform.uname()[4]
 
@@ -113,12 +112,12 @@ def install_packages(packages: list):
     for x in to_install:
         if DatabaseZipHelper.IsPackageVersionInstalled(package=x[0], version=x[1], arch=arch):
             print(Color.yellow + "warning: package {f}-{v} is already installed".format(f=x[0], v=x[1]) + Color.off)
+    columns = 0  # to make pycharm shut up
     if not os.environ.get('WPKGMAN_NO_STTY'):
         rows, columns = os.popen('stty size', 'r').read().split()
     # TODO: Add size total to this
     print("Packages to install ({n}):".format(n=len(to_install)))
     str_to_write = ""
-    columns = 0  # to make pycharm shut up
     for x in to_install:
         str_to_write += x[0] + "-" + x[1] + " "
     if os.environ.get('WPKGMAN_NO_STTY'):
@@ -166,19 +165,21 @@ def install_packages(packages: list):
         # eh, fuck security!
         for name in tarball.getmembers():
             files.append(name.name)
-        tarball.extractall(path=FileHelper.GetEffectiveRoot())
-
-        # now construct a YAML file for the installed package
+        try:
+            tarball.extractall(path=FileHelper.GetEffectiveRoot())
+        except:
+            print(Color.red + "Error: cannot extract tarball, file exists in filesystem" + Color.off)
+            continue
+        # now construct a dict for the installed file
         d = {
             "package": pkg[0],
             "version": pkg[1],
             "repo": pkg[2],
+            "arch": arch,
             'files': files
         }
-        # Write directly to /tmp instead of using filehelper
 
-        DatabaseZipHelper.AddFileToZipfile(pkg[0] + '/' + pkg[0] +
-                                           '-' + arch + '.yml', yaml.dump(d))
+        DatabaseZipHelper.AddPackageToDatabase(pkg[0], d)
         # aaand we're done
         print(Color.green + "done" + Color.off)
     if len(failedcounter) > 0:
