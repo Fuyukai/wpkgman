@@ -107,9 +107,15 @@ def install_packages(packages: list):
         deps = get_dependencies(pkg, [])
         if deps is False:
             print("Not installing.")
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
             return
         to_install += deps
     for x in to_install:
+        if not DatabaseZipHelper.CanReinstallPackage(package=x[0]):
+            print(Color.red + "Error: package {pkg} cannot be reinstalled".format(pkg=x[0]) + Color.off,
+                  file=sys.stderr)
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+            return
         if DatabaseZipHelper.IsPackageVersionInstalled(package=x[0], version=x[1], arch=arch):
             print(Color.yellow + "warning: package {f}-{v} is already installed".format(f=x[0], v=x[1]) + Color.off)
     columns = 0  # to make pycharm shut up
@@ -176,6 +182,7 @@ def install_packages(packages: list):
             "version": pkg[1],
             "repo": pkg[2],
             "arch": arch,
+            "noreinstall": True if 'noreinstall' in repo.packages[pkg[0]] else False,
             'files': files
         }
 

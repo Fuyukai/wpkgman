@@ -65,6 +65,19 @@ def IsPackageInstalled(package: str, arch: str="") -> bool:
         return True
 
 
+def CanReinstallPackage(package: str) -> bool:
+    """
+    Check if the package can be reinstalled.
+    @param package: The package to check.
+    @return: If it can be reinstalled or not.
+    """
+    content = GetDatabaseContent()
+    pkgs = content['packages']
+    if package not in pkgs:
+        return True
+    else:
+        return not pkgs[package]['noreinstall']
+
 def IsPackageVersionInstalled(package: str, version: str, arch: str="") -> bool:
     """
     Checks if a package with the specified version is installed.
