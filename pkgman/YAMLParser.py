@@ -30,7 +30,7 @@ class Repo(YAMLBase):
 class Config(YAMLBase):
     def __init__(self):
         super().__init__()
-
+        self.repos = None
         self.options = None
 
         # Auto parse the repo file, and fill in the fields
@@ -72,9 +72,8 @@ upgrade_first:
 """
             f = FileHelper.OpenFileForWritingText('etc/wpkgman.yml')
             f.write(content)
-        else:
-            self.options = (yaml_output['options'][0]['noconfirm'])
-            self.mirrors = yaml_output['mirrors']
-            self.repos = yaml_output['repos']
-            self.ignore_package = yaml_output['ignore_package']
-            self.upgrade_first = yaml_output['upgrade_first']
+        self.options = (yaml_output['options'][0]['noconfirm'])
+        self.mirrors = yaml_output['mirrors']
+        self.repos = yaml_output['repos']
+        self.ignore_package = yaml_output['ignore_package']
+        self.upgrade_first = yaml_output['upgrade_first']
