@@ -55,7 +55,6 @@ def IsPackageInstalled(package: str, arch: str="") -> bool:
     @return: If the package is installed or not.
     """
     content = GetDatabaseContent()
-    print(content)
     if 'packages' not in content:
         WriteToDatabaseFile({'packages': {}})
         return False
@@ -81,7 +80,7 @@ def IsPackageVersionInstalled(package: str, version: str, arch: str="") -> bool:
     content = GetDatabaseContent()
     pkgs = content['packages']
     pkg = pkgs[package]
-    if 'version' in pkg:
+    if not 'version' in pkg:
         return False
     else:
         if pkg['version'] == version:
