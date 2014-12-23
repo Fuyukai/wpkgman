@@ -1,7 +1,13 @@
+import sys
+
 import io
 from . import FileHelper
+from .WPKGMANINFO import Color as Color
 import yaml
 import warnings
+import shutil
+import os
+
 warnings.filterwarnings("ignore")
 
 
@@ -26,11 +32,9 @@ def GetDatabaseContent() -> dict:
     try:
         yaml_content = yaml.safe_load(fobj)
     except:
-        yaml_content = {'packages': {}}
-        fobj.close()
-        fobj = FileHelper.OpenFileRaw("var/wpkgman/installed.db", mode='w')
-        yaml.safe_dump(yaml_content, fobj)
-        fobj.close()
+        print(Color.yellow + "WARNING: INSTALLED PACKAGE IS CORRUPTED. RESTORE FROM INSTALLED.DB.BAK." + Color.off)
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+        sys.exit(1)
     finally:
         fobj.close()
     if yaml_content is None:
@@ -39,6 +43,9 @@ def GetDatabaseContent() -> dict:
 
 
 def WriteToDatabaseFile(content: dict):
+    # Safety first!
+    shutil.copy2(FileHelper.GetFullFilePath('var/wpkgman/installed.db'),
+                 FileHelper.GetFullFilePath('var/wpkgman/installed.db.bak'))
     content_old = GetDatabaseContent()
     # get an empty database file
     fobj = GetDatabaseFile(mode='wt')
