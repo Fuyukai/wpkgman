@@ -165,7 +165,7 @@ def install_packages(packages: list):
         except FileNotFoundError:
             print("Installing package {pkg} ({n}/{mn})...".format(
                 pkg=pkg[0], n=num + 1, mn=len(to_install))
-                + Color.red + " failed" + Color.off, file=sys.stderr)
+                  + Color.red + " failed" + Color.off, file=sys.stderr)
             continue
         print("Installing package {pkg} ({n}/{mn})...".format(pkg=pkg[0], n=num + 1, mn=len(to_install)), end=' ')
         # eh, fuck security!
@@ -236,6 +236,63 @@ def get_dependencies(package: str, olddeps: list) -> list:
             dependencies.append((dep, pkg_exists[2], pkg_exists[1]))
         dependencies += get_dependencies(dep, olddeps=dependencies)
     return dependencies
+
+
+def remove_packages(packages: list):
+    y = YAMLParser.Config()
+    # Check if anything depends on each package
+    if os.path.exists(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock'):
+        print(Color.red + "Error: Lock file exists. Perhaps wpkgman is open elsewhere?" + Color.off, file=sys.stderr)
+        return
+    FileHelper.OpenFileForWritingText('var/wpkgman/lock').close()
+    to_remove = []
+    for package in packages:
+        pkg_exists = check_package_exists(package)
+        if not pkg_exists[0]:
+            print(Color.red + "Error: No such package {pkg}".format(pkg=package) + Color.off, file=sys.stderr)
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+            return
+
+        installed = DatabaseZipHelper.IsPackageInstalled(package)
+        if not installed:
+            print(Color.red + "Error: package {pkg} is not installed".format(pkg=package) + Color.off, file=sys.stderr)
+            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+            return
+
+        for r in y.repos:
+            repo = YAMLParser.Repo(y.repos[r]['loc'], r)
+            if not hasattr(repo, 'packages'):
+                continue
+            for pkg in repo.packages:
+                if 'dependencies' not in repo.packages[pkg]:
+                    continue
+                else:
+                    if package in repo.packages[pkg]['dependencies']:
+                        if not pkg in packages:
+                            print(Color.red + "Error: cannot remove {thispkg} as {pkg} depends on it - aborting".format(
+                                thispkg=package,
+                                pkg=pkg
+                            ) + Color.off, file=sys.stderr)
+                            os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+                            return
+        to_remove.append(pkg_exists)
+    # os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+    columns = 0  # to make pycharm shut up
+    if not os.environ.get('WPKGMAN_NO_STTY'):
+        rows, columns = os.popen('stty size', 'r').read().split()
+    # TODO: Add size total to this
+    print("Packages to remove ({n}):".format(n=len(packages)))
+    str_to_write = ""
+    for n, x in enumerate(to_remove):
+        str_to_write += packages[n] + "-" + x[2] + " "
+    if os.environ.get('WPKGMAN_NO_STTY'):
+        print(str_to_write)
+    else:
+        print(textwrap.fill(str_to_write, int(columns)))
+    print(Color.white + "Continue? [Y/n]" + Color.off, end=' ')
+    if not input().lower() == 'y':
+        os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+        return
 
 
 def search_package(package: str):
