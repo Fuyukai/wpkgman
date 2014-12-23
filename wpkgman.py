@@ -10,6 +10,8 @@ from pkgman.WPKGMANINFO import Color as Color
 import os
 
 
+
+
 # Are we running on a test system?
 test_sys = os.environ.get('WPKGMAN_TEST')
 # Inject a function into the open/close helper lib to redirect packages to a test dir.
@@ -34,7 +36,8 @@ parser = argparse.ArgumentParser(description='Wise Package Manager', prog="wpkgm
 parser.add_argument("-I", "--install", nargs="+", help="Install package(s)", metavar="PKG")
 parser.add_argument("-S", "--sync", action="store_true", default=False,
                     help="Sync repository databases")
-parser.add_argument("-s", "--search", nargs=1, help="Search for packages")
+parser.add_argument("-s", "--search", nargs=1, help="Search for packages", metavar="PKG")
+parser.add_argument("-R", "--remove", nargs="+", help="Remove package(s)", metavar="PKG")
 args = parser.parse_args()
 hasarg = False
 
@@ -54,6 +57,10 @@ if args.search:
 elif args.install:
     check_uid()
     pkgman.install_packages(args.install)
+    hasarg = True
+elif args.remove:
+    check_uid()
+    pkgman.remove_packages(args.remove)
     hasarg = True
 
 if not hasarg:
