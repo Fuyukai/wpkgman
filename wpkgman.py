@@ -12,6 +12,7 @@ import os
 
 
 
+
 # Are we running on a test system?
 test_sys = os.environ.get('WPKGMAN_TEST')
 # Inject a function into the open/close helper lib to redirect packages to a test dir.
@@ -38,6 +39,7 @@ parser.add_argument("-S", "--sync", action="store_true", default=False,
                     help="Sync repository databases")
 parser.add_argument("-s", "--search", nargs=1, help="Search for packages", metavar="PKG")
 parser.add_argument("-R", "--remove", nargs="+", help="Remove package(s)", metavar="PKG")
+parser.add_argument("--force", action="store_true", default=False, help="Force action (NOT RECOMMENDED)")
 args = parser.parse_args()
 hasarg = False
 
@@ -60,7 +62,7 @@ elif args.install:
     hasarg = True
 elif args.remove:
     check_uid()
-    pkgman.remove_packages(args.remove)
+    pkgman.remove_packages(args.remove, args.force)
     hasarg = True
 
 if not hasarg:

@@ -238,7 +238,7 @@ def get_dependencies(package: str, olddeps: list) -> list:
     return dependencies
 
 
-def remove_packages(packages: list):
+def remove_packages(packages: list, force: bool=False):
     y = YAMLParser.Config()
     # Check if anything depends on each package
     if os.path.exists(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock'):
@@ -258,6 +258,12 @@ def remove_packages(packages: list):
             print(Color.red + "Error: package {pkg} is not installed".format(pkg=package) + Color.off, file=sys.stderr)
             os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
             return
+        if force:
+            print(Color.yellow + "WARNING: Skipping dependency checking for package {pkg}!".format(
+                pkg=package) + Color.off,
+                  file=sys.stderr)
+            to_remove.append(pkg_exists)
+            continue  # Skip dependency checking
 
         for r in y.repos:
             repo = YAMLParser.Repo(y.repos[r]['loc'], r)
