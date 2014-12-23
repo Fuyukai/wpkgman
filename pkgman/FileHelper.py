@@ -1,10 +1,12 @@
 # File helper
-import yaml
 import sys
+
+import yaml
 import io
 import os
 
-def GetEffectiveRoot():
+
+def GetEffectiveRoot() -> str:
     """
     Gets the effective root of the system.
     @return: The effective root of the system. /home/<user>/dev/wpkgman/fakeroot
@@ -13,6 +15,16 @@ def GetEffectiveRoot():
         return os.environ['WPKGMAN_ROOT']
     else:
         return "/"
+
+
+def GetFullFilePath(path: str) -> str:
+    """
+    Gets the full file path, including the effective root.
+    @param path: The path to get.
+    @return: The full file path with effective root appended.
+    """
+    return GetEffectiveRoot() + path
+
 
 def OpenFileRaw(file: str, mode: str='r') -> io.FileIO:
     """
