@@ -10,12 +10,8 @@ from pkgman.WPKGMANINFO import Color as Color
 import os
 
 
-
-
-
 # Are we running on a test system?
 test_sys = os.environ.get('WPKGMAN_TEST')
-# Inject a function into the open/close helper lib to redirect packages to a test dir.
 
 # Create starter directories
 if not os.path.exists(FileHelper.GetEffectiveRoot() + 'var'):
