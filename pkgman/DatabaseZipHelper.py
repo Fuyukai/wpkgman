@@ -7,9 +7,7 @@ import yaml
 import warnings
 import shutil
 import os
-
 warnings.filterwarnings("ignore")
-
 
 def GetDatabaseFile(mode: str='rt') -> io.TextIOWrapper:
     """
@@ -18,13 +16,12 @@ def GetDatabaseFile(mode: str='rt') -> io.TextIOWrapper:
     """
     file = FileHelper.OpenFileRaw("var/wpkgman/installed.db", 'rb')
     if file is None:
-        # Silently create a new lzmafile
+        # Silently create a new dbfile
         file = open(FileHelper.GetEffectiveRoot() + "var/wpkgman/installed.db", mode='w')
         file.write("""# Sample install database""")
         file.close()
     file = FileHelper.OpenFileRaw("var/wpkgman/installed.db", mode=mode)
     return file
-
 
 def GetDatabaseContent() -> dict:
     fobj = GetDatabaseFile('rt')
@@ -41,7 +38,6 @@ def GetDatabaseContent() -> dict:
         return {'packages': {}}
     return yaml_content
 
-
 def WriteToDatabaseFile(content: dict):
     # Safety first!
     shutil.copy2(FileHelper.GetFullFilePath('var/wpkgman/installed.db'),
@@ -52,7 +48,6 @@ def WriteToDatabaseFile(content: dict):
     new_content = dict(list(content_old.items()) + list(content.items()))
     yaml.safe_dump(new_content, fobj)
     fobj.close()
-
 
 def IsPackageInstalled(package: str, arch: str="") -> bool:
     """
@@ -70,7 +65,6 @@ def IsPackageInstalled(package: str, arch: str="") -> bool:
         return False
     else:
         return True
-
 
 def CanReinstallPackage(package: str) -> bool:
     """
@@ -118,7 +112,6 @@ def DoesPackageOwnFile(package: str, file: str, arch: str='x86_64') -> bool:
     """
     pass
 
-
 def AddPackageToDatabase(pkg: str, content: dict) -> None:
     """
     Adds package to database.
@@ -129,3 +122,45 @@ def AddPackageToDatabase(pkg: str, content: dict) -> None:
     dbc = GetDatabaseContent()
     dbc['packages'][pkg] = content
     WriteToDatabaseFile(dbc)
+
+
+def RemovePackageFromDatabase(pkg: str) -> bool:
+    dbc = GetDatabaseContent()
+    try:
+        dbc['packages'].pop(pkg)
+    except KeyError:
+        return False
+    else:
+        WriteToDatabaseFile(dbc)
+        return True
+
+
+def GetPackageFiles(pkg: str) -> list:
+    """
+    Gets the files that the package owns.
+    @param pkg: The package to check.
+    @return: Returns a list of files, or an empty list if the package is not installed/owns no files.
+    """
+    if not IsPackageInstalled(pkg):
+        return []
+    content = GetDatabaseContent()
+    pkg_files = content['packages'][pkg]['files']
+    return pkg_files
+
+
+def IsFileUniqueToPackage(package: str, file: str) -> bool:
+    """
+
+    @param package: The package to check.
+    @param file: The file to check.
+    @return: If the file is unique to the pkg.
+    """
+
+    content = GetDatabaseContent()
+    for pkg in content['packages']:
+        if pkg == package:
+            continue
+        f = content['packages'][pkg]
+        if file in f['files']:
+            return False
+    return True
