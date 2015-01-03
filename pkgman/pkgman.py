@@ -8,9 +8,9 @@ import requests
 import textwrap
 import platform
 import tarfile
+import shutil
 
 arch = platform.uname()[4]
-
 
 def sync_sources():
     """
@@ -171,11 +171,8 @@ def install_packages(packages: list):
         # eh, fuck security!
         for name in tarball.getmembers():
             files.append(name.name)
-        try:
-            tarball.extractall(path=FileHelper.GetEffectiveRoot())
-        except:
-            print(Color.red + "Error: cannot extract tarball, file exists in filesystem" + Color.off)
-            continue
+
+        tarball.extractall(path=FileHelper.GetEffectiveRoot())
         # now construct a dict for the installed file
         d = {
             "package": pkg[0],
@@ -274,7 +271,7 @@ def remove_packages(packages: list, force: bool=False):
                     continue
                 else:
                     if package in repo.packages[pkg]['dependencies']:
-                        if not pkg in packages:
+                        if not pkg in packages:  # Screw PEP8!
                             print(Color.red + "Error: cannot remove {thispkg} as {pkg} depends on it - aborting".format(
                                 thispkg=package,
                                 pkg=pkg
@@ -300,6 +297,28 @@ def remove_packages(packages: list, force: bool=False):
         os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
         return
 
+    # Get a list of files to remove
+    for num, pkg in enumerate(packages):
+        print("Removing package {pkg} ({n}/{mn})...".format(pkg=pkg, n=num + 1, mn=len(packages)), end=' ')
+        files = DatabaseZipHelper.GetPackageFiles(pkg)
+        for f in files:
+            unique = DatabaseZipHelper.IsFileUniqueToPackage(pkg, f)
+            if not unique:
+                continue
+            try:
+                if os.path.isdir(FileHelper.GetFullFilePath(f)):
+                    shutil.rmtree(FileHelper.GetFullFilePath(f))
+                else:
+                    os.remove(FileHelper.GetFullFilePath(f))
+            except OSError:
+                print(Color.red + "Error: Cannot remove file {f} - terminating".format(f=f) + Color.off,
+                      file=sys.stderr)
+                os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+                return
+        DatabaseZipHelper.RemovePackageFromDatabase(pkg)
+        print(Color.green + "done" + Color.off)
+    os.remove(FileHelper.GetEffectiveRoot() + 'var/wpkgman/lock')
+
 
 def search_package(package: str):
     # If I knew regexps, I would do it here.
@@ -316,6 +335,7 @@ def search_package(package: str):
             continue
         for pkg in repo.packages:
             if package in pkg:
-                print(repo.name + "/" + pkg + '-' + repo.packages[pkg]['version'] + ':')
+                installed = " (installed) " if DatabaseZipHelper.IsPackageInstalled(package) else ""
+                print(repo.name + "/" + pkg + '-' + repo.packages[pkg]['version'] + installed + ':')
                 if 'description' in repo.packages[pkg]:
                     print("\t" + repo.packages[pkg]['description'])
