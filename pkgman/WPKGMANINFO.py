@@ -1,4 +1,4 @@
-__WPKGMAN_VERSION = "0.1.2"
+__WPKGMAN_VERSION = "0.2.0"
 __WPKGMAN_AUTHOR = "Eyes"
 
 class Color:
